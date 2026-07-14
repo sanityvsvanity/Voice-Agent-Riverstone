@@ -1,100 +1,37 @@
-## Walkthrough video on Loom
+# Alex — AI Voice Agent for Riverstone Place
 
-Quick walkthrough of the design and trade-offs:  
-(https://www.loom.com/share/10a8ea3f81c54ef0af553a1b144cd91e?sid=0c18def1-2c4b-4d47-b8ea-409a3d402231)
-
-
-# Inbound Voice Agent
-
-This project demonstrates an inbound sales agent for a realestate developer built with Retell.ai, Twilio, N8N and OpenAI GPT-5 mini. The agent qualifies callers, creates bookings, and logs structured JSON outputs directly into Google Sheets.
----
-
-## Stack & LLMs
-- **Telephony**: Twilio (SIP trunking, call routing).
-- **Voice Runtime**: Retell.ai (handles STT, TTS, real-time inference, transcripts & recordings).
-- **LLM**: OpenAI GPT-5 mini (low latency, more cost-effective than GPT-4.1 mini).
-- **Automation**: N8N workflows (webhooks, Data logging & transformation in Google Sheets).
-- **Storage / Logs**:
-  - Retell.ai - transcripts + call recordings.
-  - Google Sheets - Raw JSON & Structured JSON outputs for each call.
+> 🎥 [Loom walkthrough](https://www.loom.com/share/10a8ea3f81c54ef0af553a1b144cd91e?sid=0c18def1-2c4b-4d47-b8ea-409a3d402231)
 
 ---
 
-## 🧭 Prompt / Flow Design
-**System Prompt**:  
-Prompts built with core Human & Machine interation priniciples (RACI).
-> You are a polite real estate sales assistant. Greet callers, ask qualifying questions (budget, bedrooms, parking, location, timeframe, finance). Confirm their answers, offer a 15-min booking, then output a JSON object into Google Sheets. Always stay concise and professional.
+## Problem
 
-**Flow:**
-1. Greeting & context.
-2. Structured Q&A to capture lead details.
-3. Confirmation of caller inputs.
-4. Book 15-min appointment (Calendly or mock API).
-5. Output structured JSON to Google Sheets.
-6. Close with a polite summary or escalate to human.
+Riverstone Place, a real estate developer, was missing inbound sales calls after hours and during peak periods. Every missed call was a lost lead — and hiring 24/7 staff wasn't viable.
 
----
+## Build
 
-## Grounding Approach
-- **JSON-first design**  all structured outputs logged in Google Sheets.
-- **Dynamic grounding** booking link, office hours, or other context injected dynamically through knowledge pack.
-- **Session isolation** each call is stateless (no cross-call memory).
+Alex is an AI voice agent that answers every call, qualifies buyers, and books appointments — no human needed until the meeting.
+
+- **Telephony**: Twilio SIP trunking routes calls to the agent
+- **Voice Runtime**: Retell.ai handles speech-to-text, text-to-speech, and real-time inference
+- **LLM**: OpenAI GPT-5 mini — low latency, cost-effective for voice
+- **Automation**: N8N workflows log structured JSON call summaries into Google Sheets
+- **Logs**: Retell.ai stores full transcripts + call recordings
+
+## Result
+
+Alex handles the full qualification flow: greets callers, asks structured questions (budget, bedrooms, parking, location, timeframe, finance), confirms answers, offers a 15-minute booking, and outputs structured data. The sales team walks into every call pre-briefed.
 
 ---
 
-## Guardrails
-- JSON-only outputs enforced in final step.
-- Out-of-scope requests -> default fallback: *“Let me connect you with a team member.”*
-- Max ~200 tokens per turn (latency guard).
-- Naturalisation of phone numbers, dollar amounts and abbreviations.
-- Instructions against providing financial, tax, or legal advice.
-- Retell + OpenAI moderation filters active.
-- + more guardrails from knowledge pack.
+## Stack
 
----
+`twilio` · `retell-ai` · `openai` · `n8n` · `google-sheets`
 
-## Logging
-- **Retell.ai** - transcripts + audio recordings.
-- **Google Sheets** - structured JSON records (one row per call).
-- **N8N** - Slack alerts if booking or logging fails.
+## Prompt Design
 
----
+Built with core human-machine interaction principles (RACI). The system prompt keeps Alex polite, professional, and on-script:
 
-## Cost to Run 100 Calls
-Assuming 5 min/call (~500 total minutes):
+> *You are a polite real estate sales assistant. Greet callers, ask qualifying questions, confirm their answers, offer a 15-min booking, then output a JSON object. Always stay concise and professional.*
 
-- Twilio: $0.0109/min × 500 = **$5.49**
-- Retell.ai(GPT 5 mini): $0.012/min × 500 = **$6.00**
-- Misc/storage: negligible
-
-**Total ≈ ~$12 for 100 calls**
-
----
-
-## What to Improve Next
-- CRM integrations (HubSpot, Salesforce) for personalized conversations.
-- Dynamic grounding with multiple live property listings, multi- calender.
-- Analytics dashboard (conversion, drop-off rates).
-- Branded/custom TTS voices.
-- Connect a database under an LLM layer to query in natural language.
-- Explore open-weight models for cheaper inference.
-
----
-## Config Peek
-
-- [System Prompt](prompts/system-prompt.txt)  
-- [N8N Workflow Config](config/n8n-workflow.json)  
-
-### Architecture Diagram
-
-```mermaid
-flowchart TD
-    A[Caller] -->|Phone Call| B[Twilio SIP Trunk]
-    B -->|Voice Stream| C[Retell.ai]
-    C -->|STT + LLM + TTS| D[N8N Workflow]
-    C -->|Transcripts & Recordings| E[Retell Logs]
-
-    D -->|Append JSON| F[Google Sheets]
-    D -->|Create Event| G[Calendly / Mock API]
-
-
+**Flow:** Greeting → Structured Q&A → Confirmation → Booking offer → JSON output → Google Sheets log.
