@@ -1,37 +1,43 @@
-# Alex — AI Voice Agent for Riverstone Place
+# Switchboard
 
-> 🎥 [Loom walkthrough](https://www.loom.com/share/10a8ea3f81c54ef0af553a1b144cd91e?sid=0c18def1-2c4b-4d47-b8ea-409a3d402231)
+An AI agent that runs the phones for real-estate sales teams. It answers every inbound call, qualifies buyers through structured questions, books inspections into real calendar slots and logs a structured summary of every conversation with the transcript and recording attached.
 
----
+Walkthrough of a live client deployment: [Loom](https://www.loom.com/share/10a8ea3f81c54ef0af553a1b144cd91e?sid=0c18def1-2c4b-4d47-b8ea-409a3d402231)
 
 ## Problem
 
-Riverstone Place, a real estate developer, was missing inbound sales calls after hours and during peak periods. Every missed call was a lost lead — and hiring 24/7 staff wasn't viable.
+A Melbourne property developer was missing inbound sales calls after hours and during peak periods. Every missed call was a lost lead, and staffing the phones around the clock was not viable.
 
 ## Build
 
-Alex is an AI voice agent that answers every call, qualifies buyers, and books appointments — no human needed until the meeting.
+- Telephony: Twilio SIP trunking routes calls to the agent
+- Voice runtime: Retell handles speech to text, text to speech and real time inference
+- LLM: GPT-5 mini for low latency voice turns
+- Automation: N8N workflows log structured call summaries and book inspections through Calendly
+- Logs: full transcript and recording stored for every call
 
-- **Telephony**: Twilio SIP trunking routes calls to the agent
-- **Voice Runtime**: Retell.ai handles speech-to-text, text-to-speech, and real-time inference
-- **LLM**: OpenAI GPT-5 mini — low latency, cost-effective for voice
-- **Automation**: N8N workflows log structured JSON call summaries into Google Sheets
-- **Logs**: Retell.ai stores full transcripts + call recordings
+## The prompt does the heavy lifting
+
+[prompts/system-prompt.txt](prompts/system-prompt.txt) is the production system prompt, templated for reuse. If you are building voice agents it is the most useful file in this repo:
+
+- Slot capture, one question at a time, into a strict JSON schema: budget band, bedrooms, parking, timeframe, finance status, owner-occupier or investor, suburbs
+- Pronunciation rules for prices and phone numbers in Australian English
+- Small talk handled with a two turn budget, then a polite steer back to qualification
+- Barge-in allowed, four second silence recovery, out of scope requests get a referral instead of an improvised answer
+- STOP and opt-out requests logged as compliance flags
+- Every call ends with a function call that logs the structured summary before hangup, never read aloud
 
 ## Result
 
-Alex handles the full qualification flow: greets callers, asks structured questions (budget, bedrooms, parking, location, timeframe, finance), confirms answers, offers a 15-minute booking, and outputs structured data. The sales team walks into every call pre-briefed.
+The agent handles the full flow: greets, qualifies across nine slots, recommends stock against budget bands with an "indicative only" disclaimer, offers real inspection slots, confirms bookings with an ID, and the sales team walks into every conversation pre-briefed.
 
----
+## Repo layout
 
-## Stack
+- `prompts/system-prompt.txt`: templated production system prompt
+- `config/n8n-workflow.json`: logging and booking workflow
 
-`twilio` · `retell-ai` · `openai` · `n8n` · `google-sheets`
+## Who built this
 
-## Prompt Design
+Gagan Dasari. I run [GTMpro](https://gtmpro.com.au), an agentic GTM engineering practice in Melbourne. Switchboard is one of the systems in the [catalogue](https://gtmpro.com.au).
 
-Built with core human-machine interaction principles (RACI). The system prompt keeps Alex polite, professional, and on-script:
-
-> *You are a polite real estate sales assistant. Greet callers, ask qualifying questions, confirm their answers, offer a 15-min booking, then output a JSON object. Always stay concise and professional.*
-
-**Flow:** Greeting → Structured Q&A → Confirmation → Booking offer → JSON output → Google Sheets log.
+gagan@gtmpro.com.au · [LinkedIn](https://www.linkedin.com/in/gaganbuilds) · [GitHub](https://github.com/sanityvsvanity)
